@@ -2,6 +2,7 @@ const SMTPServer = require("simple-smtp-listener").Server;
 
 require("dotenv").config();
 
+const RECEIVE_EMAIL = process.env.RECEIVE_EMAIL;
 const FIELDS = JSON.parse(process.env.FIELDS);
 
 const createRegex = () => {
@@ -21,7 +22,7 @@ const handleMessage = async (mail) => {
 };
 
 const server = new SMTPServer(25);
-server.on("tmd@herald.lp13.rpiambulance.com", async (mail) => {
+server.on(RECEIVE_EMAIL, async (mail) => {
   handleMessage(await mail);
 });
 
