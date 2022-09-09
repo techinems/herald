@@ -1,4 +1,7 @@
 const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+const TO_EMAIL = process.env.RECEIVE_EMAIL;
 
 let transporter = nodemailer.createTransport({
   host: "localhost",
@@ -16,7 +19,7 @@ let transporter = nodemailer.createTransport({
 
 var message = {
   from: "test@localhost",
-  to: "tmd@herald.lp13.rpiambulance.com",
+  to: TO_EMAIL,
   subject: "cadpaging",
   text: "PAGE SENT TO RE59 INCIDENT 22-184838 CALL TYPE B-Falls ADDRESS 1649 15th Street APT / FLR LOCATION RPI - Russel Sage Dining Hall (RPI) CROSS STREETS Bouton Road/Sage Avenue EMD CODE 17B04 LATITUDE 42729787 LONGITUDE 73678242",
 };
