@@ -21,7 +21,8 @@ var message = {
   from: "test@localhost",
   to: TO_EMAIL,
   subject: "cadpaging",
-  text: "PAGE SENT TO RE59 INCIDENT 22-184838 CALL TYPE B-Falls ADDRESS 1649 15th Street APT / FLR LOCATION RPI - Russel Sage Dining Hall (RPI) CROSS STREETS Bouton Road/Sage Avenue EMD CODE 17B04 LATITUDE 42729787 LONGITUDE 73678242",
+  // text: "Car 1 testing only",
+  text: "PAGE SENT TO RE59 INCIDENT 22-184838 CALL TYPE B-Falls ADDRESS 1649 15th Street APT / FLR 1201 LOCATION RPI - Russel Sage Dining Hall (RPI) CROSS STREETS Bouton Road/Sage Avenue EMD CODE 17B04 LATITUDE 42729787 LONGITUDE 73678242",
 };
 
 transporter.sendMail(message);

@@ -30,7 +30,37 @@ const createRegex = () => {
   return regex;
 };
 
+const handleNonDispatch = async (text) => {
+  postMessage({
+    token: TOKEN,
+    channel: CHANNEL,
+    text: text,
+    blocks: [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: `Message from dispatch:`,
+          emoji: true,
+        },
+      },
+      {
+        type: "section",
+        text: {
+          type: "plain_text",
+          text: text,
+        },
+      },
+    ],
+    unfurl_links: false,
+  });
+};
+
 const handleMessage = async ({ text }) => {
+  if (!text.trim().startsWith("PAGE SENT TO")) {
+    return handleNonDispatch(text);
+  }
+
   const regex = createRegex();
   const data = text.trim().split(regex);
   data.shift();
@@ -48,24 +78,48 @@ const handleMessage = async ({ text }) => {
   };
   info["CALL TYPE"] = callType;
 
+  //handle determinant
+  switch (info["CALL TYPE"].determinant) {
+    case "A":
+      info["CALL TYPE"].determinant = "Alpha";
+      break;
+    case "B":
+      info["CALL TYPE"].determinant = "Bravo";
+      break;
+    case "C":
+      info["CALL TYPE"].determinant = "Charlie";
+      break;
+    case "D":
+      info["CALL TYPE"].determinant = "Delta";
+      break;
+    case "E":
+      info["CALL TYPE"].determinant = "Echo";
+      break;
+    default:
+      info["CALL TYPE"].determinant = "Unknown";
+      break;
+  }
+
   //handle lat + long
   const origLat = info.LATITUDE;
   info.LATITUDE = origLat.slice(0, 2) + "." + origLat.slice(2);
   const origLong = info.LONGITUDE;
   info.LONGITUDE = "-" + origLong.slice(0, 2) + "." + origLong.slice(2);
 
-  console.log(info);
-
   postMessage({
     token: TOKEN,
     channel: CHANNEL,
-    text: {},
+    text: `Run number ${info.INCIDENT}: ${info[
+      "CALL TYPE"
+    ].determinant.toLowerCase()} ${info[
+      "CALL TYPE"
+    ].complaint.toLowerCase()} at ${info.LOCATION}`,
     blocks: [
       {
         type: "header",
         text: {
           type: "plain_text",
-          text: "Run number 22-184121",
+          text: `Run number ${info.INCIDENT}`,
           emoji: true,
         },
       },
@@ -73,21 +127,16 @@ const handleMessage = async ({ text }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "Determinant: *Alpha*\nCategory: *Falls*",
+          text: `Determinant: *${info["CALL TYPE"].determinant}*\nCategory: *${info["CALL TYPE"].complaint}*`,
         },
       },
       {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "Location: *RPI - Sage Dining Hall*\nAddress: *1649 15th Street*\nApt/Floor: *3*\nCross streets: *Bouton Road/Sage Avenue*",
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "Location: *RPI - Sage Dining Hall*\nAddress: *1649 15th Street*",
+          text: `Location: *${info.LOCATION}*\nAddress: *${info.ADDRESS}*\n${
+            info["APT / FLR"] == "" ? "" : `Apt/floor: *${info["APT / FLR"]}*\n`
+          }Cross streets: *${info["CROSS STREETS"]}*`,
         },
       },
       {
@@ -97,10 +146,34 @@ const handleMessage = async ({ text }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: "Navigate there:\n\n*<http://maps.apple.com/?daddr=42.729787,-73.678242|Apple Maps>*\n\n*<https://maps.google.com/?daddr=42.729787,-73.678242|Google Maps>*",
+          text: "Navigate:",
         },
       },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Apple Maps",
+              emoji: true,
+            },
+            url: "http://maps.apple.com/?daddr=42.729787,-73.678242",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "Google Maps",
+              emoji: true,
+            },
+            url: "https://maps.google.com/?daddr=42.729787,-73.678242",
+          },
+        ],
+      },
     ],
+    unfurl_links: false,
   });
 };
 
