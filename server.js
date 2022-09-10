@@ -159,7 +159,7 @@ const handleMessage = async ({ text }) => {
               text: "Apple Maps",
               emoji: true,
             },
-            url: "http://maps.apple.com/?daddr=42.729787,-73.678242",
+            url: `http://maps.apple.com/?daddr=${info.LATITUDE},${info.LONGITUDE}`,
           },
           {
             type: "button",
@@ -168,7 +168,7 @@ const handleMessage = async ({ text }) => {
               text: "Google Maps",
               emoji: true,
             },
-            url: "https://maps.google.com/?daddr=42.729787,-73.678242",
+            url: `https://maps.google.com/?daddr=${info.LATITUDE},${info.LONGITUDE}`,
           },
         ],
       },
