@@ -70,6 +70,9 @@ const handleMessage = async ({ text }) => {
     info[FIELDS[x]] = data[x];
   }
 
+  //handle run number
+  info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
+
   //handle call type
   origCallTypeSplit = info["CALL TYPE"].split("-");
   const callType = {
