@@ -84,7 +84,7 @@ const handleMessage = async ({ text }) => {
   } else {
     callType = {
       determinant: 0,
-      complaint: origCallTypeSplit,
+      complaint: info["CALL TYPE"],
     };
   }
   info["CALL TYPE"] = callType;
