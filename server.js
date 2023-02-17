@@ -1,5 +1,6 @@
 //node packages
 const SMTPServer = require("simple-smtp-listener").Server;
+const axios = require("axios");
 require("dotenv").config();
 
 //local packages
@@ -16,6 +17,7 @@ const RECEIVE_EMAIL = process.env.RECEIVE_EMAIL;
 const FIELDS = JSON.parse(process.env.FIELDS);
 const TOKEN = process.env.SLACK_BOT_TOKEN;
 const CHANNEL = process.env.SLACK_CHANNEL;
+const HEADSUP = process.env.HEADSUP_URL;
 const { version: VERSION } = require("./package.json");
 
 //helper functions
@@ -186,6 +188,16 @@ const handleMessage = async ({ text }) => {
     ],
     unfurl_links: false,
   });
+
+  if(HEADSUP != ''){
+    let headsup_dispatch = {
+      determinant: info["CALL TYPE"].determinant,
+      complaint: info["CALL TYPE"].complaint,
+      location: info.LOCATION
+    };
+
+    axios.post(`${HEADSUP}/dispatch`, headsup_dispatch).catch((err) => console.error(err));
+  }
 };
 
 const server = new SMTPServer(25);
