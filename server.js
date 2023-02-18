@@ -70,12 +70,23 @@ const handleMessage = async ({ text }) => {
     info[FIELDS[x]] = data[x];
   }
 
+  //handle run number
+  info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
+
   //handle call type
   origCallTypeSplit = info["CALL TYPE"].split("-");
-  const callType = {
-    determinant: origCallTypeSplit[0],
-    complaint: origCallTypeSplit[1],
-  };
+  let callType;
+  if (origCallTypeSplit.length == 2) {
+    callType = {
+      determinant: origCallTypeSplit[0],
+      complaint: origCallTypeSplit[1],
+    };
+  } else {
+    callType = {
+      determinant: 0,
+      complaint: info["CALL TYPE"],
+    };
+  }
   info["CALL TYPE"] = callType;
 
   //handle determinant
@@ -159,7 +170,7 @@ const handleMessage = async ({ text }) => {
               text: "Apple Maps",
               emoji: true,
             },
-            url: "http://maps.apple.com/?daddr=42.729787,-73.678242",
+            url: `http://maps.apple.com/?daddr=${info.LATITUDE},${info.LONGITUDE}`,
           },
           {
             type: "button",
@@ -168,7 +179,7 @@ const handleMessage = async ({ text }) => {
               text: "Google Maps",
               emoji: true,
             },
-            url: "https://maps.google.com/?daddr=42.729787,-73.678242",
+            url: `https://maps.google.com/?daddr=${info.LATITUDE},${info.LONGITUDE}`,
           },
         ],
       },
