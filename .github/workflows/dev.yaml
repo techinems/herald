@@ -12,7 +12,7 @@ jobs:
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ TIEMS_DEV1_URL }}
+          host: ${{ secrets.TIEMS_DEV1_URL }}
           username: ${{ secrets.TIEMS_DEV1_SSH_USERNAME }}
           password: ${{ secrets.TIEMS_DEV1_SSH_PASSWORD }}
           script: ${{ secrets.TIEMS_DEV1_SSH_SCRIPT }} herald
