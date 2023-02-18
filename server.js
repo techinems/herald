@@ -32,7 +32,7 @@ const createRegex = () => {
   return regex;
 };
 
-const handleNonDispatch = async (text) => {
+const handleNonDispatch = (text) => {
   postMessage({
     token: TOKEN,
     channel: CHANNEL,
@@ -42,7 +42,7 @@ const handleNonDispatch = async (text) => {
         type: "header",
         text: {
           type: "plain_text",
-          text: `Message from dispatch:`,
+          text: "Message from dispatch:",
           emoji: true,
         },
       },
@@ -58,7 +58,7 @@ const handleNonDispatch = async (text) => {
   });
 };
 
-const handleMessage = async ({ text }) => {
+const handleMessage = ({ text }) => {
   if (!text.trim().startsWith("PAGE SENT TO")) {
     return handleNonDispatch(text);
   }
@@ -76,7 +76,7 @@ const handleMessage = async ({ text }) => {
   info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
 
   //handle call type
-  origCallTypeSplit = info["CALL TYPE"].split("-");
+  const origCallTypeSplit = info["CALL TYPE"].split("-");
   let callType;
   if (origCallTypeSplit.length == 2) {
     callType = {
@@ -93,24 +93,24 @@ const handleMessage = async ({ text }) => {
 
   //handle determinant
   switch (info["CALL TYPE"].determinant) {
-    case "A":
-      info["CALL TYPE"].determinant = "Alpha";
-      break;
-    case "B":
-      info["CALL TYPE"].determinant = "Bravo";
-      break;
-    case "C":
-      info["CALL TYPE"].determinant = "Charlie";
-      break;
-    case "D":
-      info["CALL TYPE"].determinant = "Delta";
-      break;
-    case "E":
-      info["CALL TYPE"].determinant = "Echo";
-      break;
-    default:
-      info["CALL TYPE"].determinant = "Unknown";
-      break;
+  case "A":
+    info["CALL TYPE"].determinant = "Alpha";
+    break;
+  case "B":
+    info["CALL TYPE"].determinant = "Bravo";
+    break;
+  case "C":
+    info["CALL TYPE"].determinant = "Charlie";
+    break;
+  case "D":
+    info["CALL TYPE"].determinant = "Delta";
+    break;
+  case "E":
+    info["CALL TYPE"].determinant = "Echo";
+    break;
+  default:
+    info["CALL TYPE"].determinant = "Unknown";
+    break;
   }
 
   //handle lat + long
@@ -140,7 +140,8 @@ const handleMessage = async ({ text }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Determinant: *${info["CALL TYPE"].determinant}*\nCategory: *${info["CALL TYPE"].complaint}*`,
+          text: `Determinant: *${info["CALL TYPE"].determinant}*
+          \nCategory: *${info["CALL TYPE"].complaint}*`,
         },
       },
       {
@@ -189,14 +190,16 @@ const handleMessage = async ({ text }) => {
     unfurl_links: false,
   });
 
-  if(HEADSUP != ''){
-    let headsup_dispatch = {
+  if (HEADSUP != "") {
+    const headsupDispatch = {
       determinant: info["CALL TYPE"].determinant,
       complaint: info["CALL TYPE"].complaint,
-      location: info.LOCATION
+      location: info.LOCATION,
     };
 
-    axios.post(`${HEADSUP}/dispatch`, headsup_dispatch).catch((err) => console.error(err));
+    axios
+      .post(`${HEADSUP}/dispatch`, headsupDispatch)
+      .catch((err) => console.error(err));
   }
 };
 
@@ -205,5 +208,7 @@ const server = new SMTPServer(25);
 server.on(RECEIVE_EMAIL, async (mail) => {
   handleMessage(await mail);
 });
+
+console.log(`headsup v${VERSION} running`);
 
 console.log(createRegex());
