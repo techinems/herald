@@ -191,14 +191,8 @@ const handleMessage = ({ text }) => {
   });
 
   if (HEADSUP != "") {
-    const headsupDispatch = {
-      determinant: info["CALL TYPE"].determinant,
-      complaint: info["CALL TYPE"].complaint,
-      location: info.LOCATION,
-    };
-
     axios
-      .post(`${HEADSUP}/dispatch`, headsupDispatch)
+      .post(`${HEADSUP}/dispatch`, info)
       .catch((err) => console.error(err));
   }
 };
