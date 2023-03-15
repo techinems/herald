@@ -17,7 +17,8 @@ const RECEIVE_EMAIL = process.env.RECEIVE_EMAIL;
 const FIELDS = JSON.parse(process.env.FIELDS);
 const TOKEN = process.env.SLACK_BOT_TOKEN;
 const CHANNEL = process.env.SLACK_CHANNEL;
-const HEADSUP = process.env.HEADSUP_URL;
+const HEADSUP_URL = process.env.HEADSUP_URL;
+const HEADSUP_TOKEN = process.env.HEADSUP_TOKEN;
 const { version: VERSION } = require("./package.json");
 
 //helper functions
@@ -190,6 +191,8 @@ const handleMessage = ({ text }) => {
     unfurl_links: false,
   });
 
+  if (HEADSUP_URL != "") {
+    console.log("dispatching to headsup");
   if (HEADSUP != "") {
     axios
       .post(`${HEADSUP}/dispatch`, info)
