@@ -195,7 +195,7 @@ const handleMessage = ({ text }) => {
     console.log("dispatching to headsup");
   if (HEADSUP != "") {
     axios
-      .post(`${HEADSUP}/dispatch`, info)
+      .post(`${HEADSUP}/dispatch?token=${HEADSUP_TOKEN}`, info)
       .catch((err) => console.error(err));
   }
 };
