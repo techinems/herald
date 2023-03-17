@@ -94,24 +94,24 @@ const handleMessage = ({ text }) => {
 
   //handle determinant
   switch (info["CALL TYPE"].determinant) {
-  case "A":
-    info["CALL TYPE"].determinant = "Alpha";
-    break;
-  case "B":
-    info["CALL TYPE"].determinant = "Bravo";
-    break;
-  case "C":
-    info["CALL TYPE"].determinant = "Charlie";
-    break;
-  case "D":
-    info["CALL TYPE"].determinant = "Delta";
-    break;
-  case "E":
-    info["CALL TYPE"].determinant = "Echo";
-    break;
-  default:
-    info["CALL TYPE"].determinant = "Unknown";
-    break;
+    case "A":
+      info["CALL TYPE"].determinant = "Alpha";
+      break;
+    case "B":
+      info["CALL TYPE"].determinant = "Bravo";
+      break;
+    case "C":
+      info["CALL TYPE"].determinant = "Charlie";
+      break;
+    case "D":
+      info["CALL TYPE"].determinant = "Delta";
+      break;
+    case "E":
+      info["CALL TYPE"].determinant = "Echo";
+      break;
+    default:
+      info["CALL TYPE"].determinant = "Unknown";
+      break;
   }
 
   //handle lat + long
@@ -193,10 +193,11 @@ const handleMessage = ({ text }) => {
 
   if (HEADSUP_URL != "") {
     console.log("dispatching to headsup");
-  if (HEADSUP != "") {
-    axios
-      .post(`${HEADSUP}/dispatch?token=${HEADSUP_TOKEN}`, info)
-      .catch((err) => console.error(err));
+    if (HEADSUP != "") {
+      axios
+        .post(`${HEADSUP}/dispatch?token=${HEADSUP_TOKEN}`, info)
+        .catch((err) => console.error(err));
+    }
   }
 };
 
