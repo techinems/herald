@@ -1,5 +1,6 @@
 //node packages
 const SMTPServer = require("simple-smtp-listener").Server;
+const axios = require("axios");
 require("dotenv").config();
 
 //local packages
@@ -16,6 +17,8 @@ const RECEIVE_EMAIL = process.env.RECEIVE_EMAIL;
 const FIELDS = JSON.parse(process.env.FIELDS);
 const TOKEN = process.env.SLACK_BOT_TOKEN;
 const CHANNEL = process.env.SLACK_CHANNEL;
+const HEADSUP_URL = process.env.HEADSUP_URL;
+const HEADSUP_TOKEN = process.env.HEADSUP_TOKEN;
 const { version: VERSION } = require("./package.json");
 
 //helper functions
@@ -30,7 +33,7 @@ const createRegex = () => {
   return regex;
 };
 
-const handleNonDispatch = async (text) => {
+const handleNonDispatch = (text) => {
   postMessage({
     token: TOKEN,
     channel: CHANNEL,
@@ -40,7 +43,7 @@ const handleNonDispatch = async (text) => {
         type: "header",
         text: {
           type: "plain_text",
-          text: `Message from dispatch:`,
+          text: "Message from dispatch:",
           emoji: true,
         },
       },
@@ -56,7 +59,7 @@ const handleNonDispatch = async (text) => {
   });
 };
 
-const handleMessage = async ({ text }) => {
+const handleMessage = ({ text }) => {
   if (!text.trim().startsWith("PAGE SENT TO")) {
     return handleNonDispatch(text);
   }
@@ -74,7 +77,7 @@ const handleMessage = async ({ text }) => {
   info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
 
   //handle call type
-  origCallTypeSplit = info["CALL TYPE"].split("-");
+  const origCallTypeSplit = info["CALL TYPE"].split("-");
   let callType;
   if (origCallTypeSplit.length == 2) {
     callType = {
@@ -138,7 +141,8 @@ const handleMessage = async ({ text }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Determinant: *${info["CALL TYPE"].determinant}*\nCategory: *${info["CALL TYPE"].complaint}*`,
+          text: `Determinant: *${info["CALL TYPE"].determinant}*
+          \nCategory: *${info["CALL TYPE"].complaint}*`,
         },
       },
       {
@@ -186,6 +190,13 @@ const handleMessage = async ({ text }) => {
     ],
     unfurl_links: false,
   });
+
+  if (HEADSUP_URL != "") {
+    console.log("dispatching to headsup");
+    axios
+      .post(`${HEADSUP_URL}/dispatch?token=${HEADSUP_TOKEN}`, info)
+      .catch((err) => console.error(err));
+  }
 };
 
 const server = new SMTPServer(25);
@@ -193,5 +204,7 @@ const server = new SMTPServer(25);
 server.on(RECEIVE_EMAIL, async (mail) => {
   handleMessage(await mail);
 });
+
+console.log(`headsup v${VERSION} running`);
 
 console.log(createRegex());
