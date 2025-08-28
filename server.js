@@ -19,6 +19,7 @@ const TOKEN = process.env.SLACK_BOT_TOKEN;
 const CHANNEL = process.env.SLACK_CHANNEL;
 const HEADSUP_URL = process.env.HEADSUP_URL;
 const HEADSUP_TOKEN = process.env.HEADSUP_TOKEN;
+const GOOGLE_MAPS_API= = process.env.GOOGLE_MAPS_API;
 const { version: VERSION } = require("./package.json");
 
 //helper functions
@@ -60,9 +61,12 @@ const handleNonDispatch = (text) => {
 };
 
 const handleMessage = ({ text }) => {
-  if (!text.trim().startsWith("PAGE SENT TO")) {
+  if (!text.trim().startsWith("Call Type:")) {
     return handleNonDispatch(text);
   }
+
+//FIELDS=["Call Type: ","Location: ","Business: ","Additional Location Info: ","Cross Street: ","Dispatched Units: ","Response Areas: "]
+
 
   const regex = createRegex();
   const data = text.trim().split(regex);
@@ -73,11 +77,12 @@ const handleMessage = ({ text }) => {
     info[FIELDS[x]] = data[x];
   }
 
+  //***DEPRECATED***
   //handle run number
-  info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
+  //info.INCIDENT = info.INCIDENT.split(/^\d{2}-/)[1];
 
   //handle call type
-  const origCallTypeSplit = info["CALL TYPE"].split("-");
+  const origCallTypeSplit = info["Call Type: "].split(" - ");
   let callType;
   if (origCallTypeSplit.length == 2) {
     callType = {
@@ -87,46 +92,47 @@ const handleMessage = ({ text }) => {
   } else {
     callType = {
       determinant: 0,
-      complaint: info["CALL TYPE"],
+      complaint: info["Call Type: "],
     };
   }
-  info["CALL TYPE"] = callType;
+  info["Call Type: "] = callType;
 
   //handle determinant
-  switch (info["CALL TYPE"].determinant) {
+  switch (info["Call Type: "].determinant) {
     case "A":
-      info["CALL TYPE"].determinant = "Alpha";
+      info["Call Type: "].determinant = "Alpha";
       break;
     case "B":
-      info["CALL TYPE"].determinant = "Bravo";
+      info["Call Type: "].determinant = "Bravo";
       break;
     case "C":
-      info["CALL TYPE"].determinant = "Charlie";
+      info["Call Type: "].determinant = "Charlie";
       break;
     case "D":
-      info["CALL TYPE"].determinant = "Delta";
+      info["Call Type: "].determinant = "Delta";
       break;
     case "E":
-      info["CALL TYPE"].determinant = "Echo";
+      info["Call Type: "].determinant = "Echo";
       break;
     default:
-      info["CALL TYPE"].determinant = "Unknown";
+      info["Call Type: "].determinant = "Unknown";
       break;
   }
 
+  //***DEPRECATED***
   //handle lat + long
-  const origLat = info.LATITUDE;
-  info.LATITUDE = origLat.slice(0, 2) + "." + origLat.slice(2);
-  const origLong = info.LONGITUDE;
-  info.LONGITUDE = "-" + origLong.slice(0, 2) + "." + origLong.slice(2);
+  // const origLat = info.LATITUDE;
+  // info.LATITUDE = origLat.slice(0, 2) + "." + origLat.slice(2);
+  // const origLong = info.LONGITUDE;
+  // info.LONGITUDE = "-" + origLong.slice(0, 2) + "." + origLong.slice(2);
 
   postMessage({
     token: TOKEN,
     channel: CHANNEL,
-    text: `Run number ${info.INCIDENT}: ${info[
-      "CALL TYPE"
+    text: `Dispatch received: ${info[
+      "Call Type: "
     ].determinant.toLowerCase()} ${info[
-      "CALL TYPE"
+      "Call Type: "
     ].complaint.toLowerCase()} at ${info.LOCATION}`,
     blocks: [
       {
@@ -141,8 +147,8 @@ const handleMessage = ({ text }) => {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `Determinant: *${info["CALL TYPE"].determinant}*
-          \nCategory: *${info["CALL TYPE"].complaint}*`,
+          text: `Determinant: *${info["Call Type: "].determinant}*
+          \nCategory: *${info["Call Type: "].complaint}*`,
         },
       },
       {
