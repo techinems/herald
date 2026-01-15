@@ -288,6 +288,15 @@ async function handleDispatchText(text) {
     }
 
     // Dispatch to HEADSUP if configured (using fetch, similar to original pattern)
+    let infoWithGeocodedPlace = { ...info };
+    if (info.latitude && info.longitude) {
+      infoWithGeocodedPlace.Location = info.geocoded_place;
+      if (info.Business) {
+        infoWithGeocodedPlace.Location = `${info.Business} - ${infoWithGeocodedPlace.Location}`;
+      }
+    } else {
+      infoWithGeocodedPlace.Location = info.Location || "Unknown - Check dispatch for details";
+    }
     const HEADSUP_URL = process.env.HEADSUP_URL || "";
     const HEADSUP_TOKEN = process.env.HEADSUP_TOKEN || "";
     if (HEADSUP_URL != "") {
@@ -295,7 +304,7 @@ async function handleDispatchText(text) {
       const x = await fetch(`${HEADSUP_URL}/dispatch?token=${HEADSUP_TOKEN}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(info),
+        body: JSON.stringify(infoWithGeocodedPlace),
       }).catch((err) => console.error(err));
     }
   } catch (err) {
