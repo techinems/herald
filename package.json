@@ -1,6 +1,6 @@
 {
   "name": "herald",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A package to parse text message dispatches and send them to Slack",
   "main": "server.js",
   "scripts": {
