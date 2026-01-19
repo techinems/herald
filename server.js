@@ -60,6 +60,24 @@ function parseKeyValueText(text) {
   return obj;
 }
 
+// Decode simple quoted-printable artifacts commonly found in raw email bodies.
+// Removes soft line breaks (=<CR><LF>) and converts =HH hex escapes to characters.
+function decodeQuotedPrintable(s) {
+  if (!s || typeof s !== "string") return s;
+  // remove soft line breaks
+  let out = s.replace(/=\r?\n/g, "");
+  // handle common hex escapes like =0A, sometimes mis-encoded as =OA
+  out = out.replace(/=0A/gi, "\n");
+  out = out.replace(/=0D/gi, "\r");
+  out = out.replace(/=OA/gi, "\n");
+  out = out.replace(/=OD/gi, "\r");
+  // general =HH hex escapes
+  out = out.replace(/=([0-9A-Fa-f]{2})/g, function (_, hex) {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  return out;
+}
+
 // Use Google Geocoding API to turn an address into lat/lng.
 // We "bias" to Troy, NY by setting components=locality:Troy|administrative_area:NY|country:US
 // which will prefer results in Troy, NY.
@@ -355,6 +373,8 @@ const server = new SMTPServer({
         }
 
         // Trim and pass to handler
+        // Decode quoted-printable artifacts (soft breaks, =0A etc.) before parsing.
+        bodyCandidate = decodeQuotedPrintable(bodyCandidate);
         await handleDispatchText(bodyCandidate);
         callback();
       } catch (err) {
