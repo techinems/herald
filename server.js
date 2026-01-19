@@ -290,7 +290,7 @@ async function handleDispatchText(text) {
     }
 
     // Compose the short text and post to Slack
-    const shortText = `${info["CALL TYPE"].determinant.toLowerCase()} ${info["CALL TYPE"].complaint.toLowerCase()} at ${info.Location}`;
+    const shortText = `${info["CALL TYPE"].determinant.toUpperCase()} ${info["CALL TYPE"].complaint.toLowerCase()} at ${info.Location}`;
 
     await postMessage({
       token: SLACK_TOKEN,
@@ -390,7 +390,7 @@ const server = new SMTPServer({
 
 server.listen(PORT, () => {
   console.log(`Dispatch SMTP server listening on port ${PORT}`);
-  console.log(`Expecting messages sent TO: ${RECEIVE_EMAIL}`);
+  console.log(`Expecting messages sent to: ${RECEIVE_EMAIL}`);
   console.log(`herald v${VERSION} running`);
 });
 
