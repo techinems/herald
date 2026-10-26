@@ -388,6 +388,19 @@ const server = new SMTPServer({
   size: 10 * 1024 * 1024,
 });
 
+// Per-connection socket errors (timeouts, resets from scanners, etc.) are re-emitted
+// on the server; without a listener they crash the process.
+server.on("error", (err) => {
+  if (err && err.syscall === "listen") {
+    console.error("SMTP server failed to listen:", err.message);
+    process.exit(1);
+  }
+  console.warn(
+    `SMTP connection error${err && err.remoteAddress ? ` from ${err.remoteAddress}` : ""}:`,
+    err && err.code ? err.code : err && err.message ? err.message : err
+  );
+});
+
 server.listen(PORT, () => {
   console.log(`Dispatch SMTP server listening on port ${PORT}`);
   console.log(`Expecting messages sent to: ${RECEIVE_EMAIL}`);
