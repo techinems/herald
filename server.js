@@ -5,6 +5,7 @@
 // - posts a Slack message formatted similarly to server.js
 //
 // Environment variables required:
+// - SLACK_ENABLED (optional, defaults to true; set to false to disable Slack posting)
 // - SLACK_BOT_TOKEN         (the bot token used with chat.postMessage)
 // - SLACK_CHANNEL           (channel id to post to)
 // - GOOGLE_MAPS_API_KEY     (API key for Google Maps Geocoding API)
@@ -19,14 +20,11 @@
 const { SMTPServer } = require("smtp-server");
 require("dotenv").config();
 
+// Set SLACK_ENABLED=false to skip posting to Slack (and skip starting the Slack app).
+const SLACK_ENABLED = (process.env.SLACK_ENABLED || "true").toLowerCase() !== "false";
+
 // local bolt helper (same shape as server.js); adjust path as needed
-const {
-  app: {
-    client: {
-      chat: { postMessage },
-    },
-  },
-} = require("./utilities/bolt.js");
+const postMessage = SLACK_ENABLED ? require("./utilities/bolt.js").app.client.chat.postMessage : null;
 
 const SLACK_TOKEN = process.env.SLACK_BOT_TOKEN;
 const SLACK_CHANNEL = process.env.SLACK_CHANNEL;
@@ -292,15 +290,22 @@ async function handleDispatchText(text) {
     // Compose the short text and post to Slack
     const shortText = `${info["CALL TYPE"].determinant.toUpperCase()} ${info["CALL TYPE"].complaint.toLowerCase()} at ${info.Location}`;
 
-    await postMessage({
-      token: SLACK_TOKEN,
-      channel: SLACK_CHANNEL,
-      text: shortText,
-      blocks: buildSlackBlocks(info),
-      unfurl_links: false,
-    });
-
-    console.log("Posted to Slack:", shortText);
+    if (!SLACK_ENABLED) {
+      console.log("Slack disabled, skipping post:", shortText);
+    } else {
+      try {
+        await postMessage({
+          token: SLACK_TOKEN,
+          channel: SLACK_CHANNEL,
+          text: shortText,
+          blocks: buildSlackBlocks(info),
+          unfurl_links: false,
+        });
+        console.log("Posted to Slack:", shortText);
+      } catch (err) {
+        console.error("Slack post failed:", err && err.message ? err.message : err);
+      }
+    }
     if (info.geocoded_place) {
       console.log("Geocoded to:", info.geocoded_place);
     }
@@ -319,15 +324,45 @@ async function handleDispatchText(text) {
     const HEADSUP_TOKEN = process.env.HEADSUP_TOKEN || "";
     if (HEADSUP_URL != "") {
       console.log(`dispatching to headsup`);
-      const x = await fetch(`${HEADSUP_URL}/dispatch?token=${HEADSUP_TOKEN}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(infoWithGeocodedPlace),
-      }).catch((err) => console.error(err));
+      try {
+        const resp = await fetch(`${HEADSUP_URL}/dispatch?token=${HEADSUP_TOKEN}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(infoWithGeocodedPlace),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (resp.ok) {
+          console.log(`headsup accepted dispatch (HTTP ${resp.status})`);
+        } else {
+          const body = await resp.text().catch(() => "");
+          console.error(`headsup rejected dispatch: HTTP ${resp.status} ${body.slice(0, 500)}`);
+        }
+      } catch (err) {
+        console.error("headsup request failed:", err && err.message ? err.message : err);
+      }
     }
   } catch (err) {
     console.error("handleDispatchText error:", err && err.message ? err.message : err);
   }
+}
+
+// Remember recently seen Message-IDs so a redelivered email doesn't post twice.
+const DEDUPE_WINDOW_MS = 30 * 60 * 1000;
+const seenMessageIds = new Map();
+function isDuplicateMessage(rawEmail) {
+  const match = rawEmail.match(/^Message-ID:\s*(.+)$/im);
+  if (!match) return false;
+  const id = match[1].trim();
+  const now = Date.now();
+  for (const [seenId, ts] of seenMessageIds) {
+    if (now - ts > DEDUPE_WINDOW_MS) seenMessageIds.delete(seenId);
+  }
+  if (seenMessageIds.has(id)) {
+    console.warn(`Ignoring duplicate delivery of message ${id}`);
+    return true;
+  }
+  seenMessageIds.set(id, now);
+  return false;
 }
 
 // Set up SMTP server that only accepts messages sent to RECEIVE_EMAIL
@@ -375,8 +410,13 @@ const server = new SMTPServer({
         // Trim and pass to handler
         // Decode quoted-printable artifacts (soft breaks, =0A etc.) before parsing.
         bodyCandidate = decodeQuotedPrintable(bodyCandidate);
-        await handleDispatchText(bodyCandidate);
+
+        // Acknowledge the message before the slow downstream work (geocode, Slack,
+        // headsup); otherwise the sending MTA can time out and redeliver it.
         callback();
+
+        if (isDuplicateMessage(emailBody)) return;
+        handleDispatchText(bodyCandidate);
       } catch (err) {
         console.error("onData processing error:", err && err.message ? err.message : err);
         callback(err);
